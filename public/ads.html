@@ -1,124 +1,81 @@
-<!DOCTYPE html>
-<html lang="no">
-<head>
-  <meta charset="UTF-8" />
-  <title>Annonser | GA-13</title>
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-    @media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}
-    @media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:520px){.grid{grid-template-columns:1fr}}
-    .adcard img{width:100%;height:180px;object-fit:cover;border-radius:10px}
-    .toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
-    .toolbar input,.toolbar select{height:36px}
-  </style>
-</head>
-<body>
-<header class="container">
-  <h1>Annonser</h1>
-  <nav>
-    <a href="index.html">Hjem</a>
-    <a href="ads.html" class="active">Annonser</a>
-    <a href="new-ad.html">Ny annonse</a>
+<!doctype html><html lang="no"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mine annonser • GA-13</title>
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<header class="site-header"><div class="wrap">
+  <h1>Mine annonser</h1>
+  <nav class="main-nav">
+    <a href="/">Forside</a>
+    <a href="/market.html">Kjøp & salg</a>
+    <a class="btn" href="/new-ad.html">Ny annonse</a>
   </nav>
-</header>
-<!-- Ett annonsekort (template) -->
-<div class="ad-card" data-id="{{ID}}">
-  <img src="{{IMG}}" alt="">
-  <div class="ad-body">
-    <h3>{{TITLE}}</h3>
-    <p class="price">{{PRICE}} kr</p>
-    <p class="meta">{{CATEGORY}} • {{LOCATION}}</p>
+</div></header>
 
-    <div class="ad-actions">
-      <a class="btn" href="/ad.html?id={{ID}}">Se detaljer</a>
-      <button class="btn-like" data-id="{{ID}}" title="Legg til/fjern favoritt">♡</button>
-    </div>
-  </div>
-</div>
-<main class="container">
-  <div class="toolbar">
-    <input id="q" placeholder="Søk…" />
-    <input id="min" type="number" min="0" placeholder="Min pris" style="width:120px" />
-    <input id="max" type="number" min="0" placeholder="Max pris" style="width:120px" />
-    <select id="sort">
-      <option value="new">Nyeste</option>
-      <option value="price_asc">Pris ↑</option>
-      <option value="price_desc">Pris ↓</option>
-    </select>
-    <button id="btnFilter">Filtrer</button>
-  </div>
+<main class="wrap">
+  <section class="card" style="margin-bottom:16px">
+    <form id="ownerForm" style="display:flex;gap:8px;flex-wrap:wrap">
+      <input id="owner" name="owner" type="email" required placeholder="din@epost.no" style="flex:1;min-width:260px;padding:10px">
+      <button class="btn" type="submit">Vis mine</button>
+    </form>
+    <p class="muted" style="margin-top:6px">* Midlertidig løsning uten innlogging – filtrerer på e-postfeltet <code>owner</code>.</p>
+  </section>
 
-  <div id="ads" class="grid"></div>
+  <section id="grid" class="grid"></section>
 </main>
 
 <script>
-async function loadAds() {
-  const q = document.getElementById("q").value.trim();
-  const min = document.getElementById("min").value.trim();
-  const max = document.getElementById("max").value.trim();
-  const sort = document.getElementById("sort").value;
+const grid = document.getElementById('grid');
+const ownerInput = document.getElementById('owner');
+const ownerForm = document.getElementById('ownerForm');
 
-  const params = new URLSearchParams();
-  if (q) params.set("query", q);
-  if (min) params.set("min", min);
-  if (max) params.set("max", max);
-  if (sort) params.set("sort", sort);
+// Husk sist brukt e-post lokalt
+ownerInput.value = localStorage.getItem('ga13_owner') || '';
 
-  const res = await fetch("/api/ads?" + params.toString());
-  const items = await res.json();
-
-  const wrap = document.getElementById("ads");
-  wrap.innerHTML = "";
-  items.forEach(a => {
-    const img = (a.images && a.images[0]) ? a.images[0] : "https://via.placeholder.com/600x400?text=Ingen+bilde";
-    const el = document.createElement("a");
-    el.className = "card adcard";
-    el.href = "ad.html?id=" + encodeURIComponent(a.id);
-    el.innerHTML = `
-      <img src="${img}" alt="">
-      <h3>${escapeHtml(a.title || "")}</h3>
-      <p class="muted">${(a.price || 0).toLocaleString("no-NO")} kr</p>
-    `;
-    wrap.appendChild(el);
-  });
-}
-document.getElementById("btnFilter").addEventListener("click", loadAds);
-
-function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]))}
-loadAds();
-
-<script>
-const AUTH_EMAIL = localStorage.getItem("ga13_email"); // samme som tidligere "innlogging light"
-async function toggleFavorite(id, btn) {
-  if (!AUTH_EMAIL) { alert("Logg inn for å bruke favoritter."); return; }
-  try {
-    const active = btn.classList.contains("active");
-    const method = active ? "DELETE" : "POST";
-    const res = await fetch(`/api/favorites/${id}`, {
-      method,
-      headers: {
-        "Content-Type":"application/json",
-        "Authorization": "Bearer " + AUTH_EMAIL
-      }
-    });
-    if (!res.ok) throw new Error((await res.json()).error||"Feil");
-    btn.classList.toggle("active");
-    btn.textContent = btn.classList.contains("active") ? "♥" : "♡";
-  } catch (e) {
-    alert("Klarte ikke oppdatere favoritt: " + e.message);
-  }
-}
-
-// Knytt alle knapper
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".btn-like");
-  if (!btn) return;
-  const id = btn.dataset.id;
-  toggleFavorite(id, btn);
+ownerForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const owner = ownerInput.value.trim();
+  if(!owner) return;
+  localStorage.setItem('ga13_owner', owner);
+  load(owner);
 });
-</script>
 
-</body>
-</html>
+async function load(owner){
+  const res = await fetch('/api/ads?search=' + encodeURIComponent(owner));
+  const ads = (await res.json()).filter(a => (a.owner||'').toLowerCase() === owner.toLowerCase());
+  grid.innerHTML = ads.map(a => card(a)).join('') || '<p>Ingen annonser funnet for <strong>'+owner+'</strong>.</p>';
+}
+
+function formatCurrency(n){try{return new Intl.NumberFormat('no-NO',{style:'currency',currency:'NOK'}).format(n)}catch{return n+' kr'}}
+
+function card(a){
+  return `
+  <article class="card">
+    <img src="${a.imageUrl}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px">
+    <h3 style="margin:10px 0 4px">${escapeHtml(a.title)}</h3>
+    <div class="muted">${escapeHtml(a.category)} • ${escapeHtml(a.location||'')}</div>
+    <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:8px">
+      <strong>${formatCurrency(a.price)}</strong>
+      <span>
+        <a class="btn ghost" href="/edit-ad.html?id=${a.id}">Rediger</a>
+        <button class="btn danger" onclick="del('${a.id}')" type="button">Slett</button>
+        <a class="btn" href="/ad.html?id=${a.id}">Se</a>
+      </span>
+    </div>
+  </article>`;
+}
+
+function escapeHtml(s=''){return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
+
+async function del(id){
+  if(!confirm('Slette annonsen?')) return;
+  const res = await fetch('/api/ads/'+id,{method:'DELETE'});
+  if(!res.ok){ alert('Klarte ikke å slette'); return; }
+  // reload
+  ownerForm.dispatchEvent(new Event('submit'));
+}
+
+// auto-last om owner ligger lagret
+if(ownerInput.value) ownerForm.dispatchEvent(new Event('submit'));
+</script>
+</body></html>

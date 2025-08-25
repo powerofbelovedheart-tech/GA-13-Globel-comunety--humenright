@@ -1,0 +1,92 @@
+<!doctype html><html lang="no"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rediger annonse • GA-13</title>
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<header class="site-header"><div class="wrap">
+  <h1>Rediger annonse</h1>
+  <nav class="main-nav">
+    <a href="/market.html">Kjøp & salg</a>
+    <a href="/my-ads.html">Mine annonser</a>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <form id="f" class="card" style="max-width:720px;display:none">
+    <label>Tittel</label>
+    <input name="title" required style="width:100%;padding:10px;margin:8px 0">
+
+    <label>Pris (NOK)</label>
+    <input name="price" type="number" min="0" step="1" required style="width:100%;padding:10px;margin:8px 0">
+
+    <label>Kategori</label>
+    <select name="category" style="width:100%;padding:10px;margin:8px 0">
+      <option>Elektronikk</option>
+      <option>Sport & friluftsliv</option>
+      <option>Møbler og interiør</option>
+      <option>Klær</option>
+      <option>Annet</option>
+    </select>
+
+    <label>Bilde-URL</label>
+    <input name="imageUrl" style="width:100%;padding:10px;margin:8px 0">
+
+    <label>Sted</label>
+    <input name="location" style="width:100%;padding:10px;margin:8px 0">
+
+    <label>Beskrivelse</label>
+    <textarea name="description" rows="5" style="width:100%;padding:10px;margin:8px 0"></textarea>
+
+    <label>Kontakt (e-post)</label>
+    <input name="owner" type="email" style="width:100%;padding:10px;margin:8px 0">
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn" type="submit">Lagre</button>
+      <a class="btn ghost" id="viewLink">Til annonsen</a>
+    </div>
+  </form>
+
+  <div id="msg" class="card">Laster…</div>
+</main>
+
+<script>
+const params = new URLSearchParams(location.search);
+const id = params.get('id');
+const form = document.getElementById('f');
+const msg = document.getElementById('msg');
+const viewLink = document.getElementById('viewLink');
+
+async function load(){
+  if(!id){ msg.textContent='Mangler id'; return; }
+  const res = await fetch('/api/ads/'+id);
+  if(!res.ok){ msg.textContent='Finner ikke annonsen'; return; }
+  const a = await res.json();
+  form.title.value = a.title || '';
+  form.price.value = a.price ?? 0;
+  form.category.value = a.category || 'Annet';
+  form.imageUrl.value = a.imageUrl || '';
+  form.location.value = a.location || '';
+  form.description.value = a.description || '';
+  form.owner.value = a.owner || '';
+  viewLink.href = '/ad.html?id='+id;
+
+  msg.style.display='none';
+  form.style.display='block';
+}
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const body = Object.fromEntries(new FormData(form).entries());
+  body.price = Number(body.price||0);
+  const res = await fetch('/api/ads/'+id, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  if(!res.ok){ alert('Klarte ikke å lagre'); return; }
+  location.href = '/ad.html?id='+id;
+});
+
+load();
+</script>
+</body></html>

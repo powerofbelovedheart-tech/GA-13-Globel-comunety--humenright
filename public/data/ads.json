@@ -1,0 +1,26 @@
+{
+  "ads": [
+    {
+      "id": "a1",
+      "title": "Brukt sykkel",
+      "price": 1200,
+      "category": "Sport & friluftsliv",
+      "imageUrl": "https://images.unsplash.com/photo-1518655048521-f130df041f66?w=1200",
+      "location": "Kristiansand",
+      "description": "Pent brukt hybridsykkel. Ny kjede i vår.",
+      "owner": "demo@ga13.no",
+      "createdAt": "2025-08-01T10:00:00.000Z"
+    },
+    {
+      "id": "a2",
+      "title": "Sofa 3-seter",
+      "price": 900,
+      "category": "Møbler og interiør",
+      "imageUrl": "https://images.unsplash.com/photo-1493666438817-866a91353ca9?w=1200",
+      "location": "Arendal",
+      "description": "Ren og pen, røykfritt hjem.",
+      "owner": "demo@ga13.no",
+      "createdAt": "2025-08-02T12:30:00.000Z"
+    }
+  ]
+}

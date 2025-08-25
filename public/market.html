@@ -1,0 +1,68 @@
+<!doctype html><html lang="no"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kjøp & salg • GA-13</title>
+<link rel="stylesheet" href="/style.css">
+</head><body>
+<header class="site-header"><div class="wrap">
+  <h1>Kjøp & salg</h1>
+  <nav class="main-nav">
+    <a href="/">Forside</a>
+    <a class="btn" href="/new-ad.html">Ny annonse</a>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <section class="card" style="margin-bottom:16px">
+    <form id="searchForm" style="display:flex; gap:8px; flex-wrap:wrap">
+      <input name="search" placeholder="Søk i tittel/tekst/sted" style="flex:1; min-width:220px; padding:10px">
+      <select name="category" style="padding:10px">
+        <option value="">Alle kategorier</option>
+        <option>Elektronikk</option>
+        <option>Sport & friluftsliv</option>
+        <option>Møbler og interiør</option>
+        <option>Klær</option>
+        <option>Annet</option>
+      </select>
+      <button class="btn" type="submit">Søk</button>
+    </form>
+  </section>
+
+  <section id="grid" class="grid"></section>
+</main>
+
+<script>
+const grid = document.getElementById('grid');
+const form = document.getElementById('searchForm');
+
+async function load(params={}) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch('/api/ads' + (qs ? '?' + qs : ''));
+  const ads = await res.json();
+  grid.innerHTML = ads.map(a => card(a)).join('') || '<p>Ingen treff.</p>';
+}
+
+function card(a){
+  return `
+  <article class="card">
+    <img src="${a.imageUrl}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px">
+    <h3 style="margin:10px 0 4px">${escapeHtml(a.title)}</h3>
+    <div class="muted">${escapeHtml(a.category)} • ${escapeHtml(a.location || '')}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <strong>${formatCurrency(a.price)}</strong>
+      <a class="btn" href="/ad.html?id=${a.id}">Se mer</a>
+    </div>
+  </article>`;
+}
+
+function escapeHtml(s=''){return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
+function formatCurrency(n){try{return new Intl.NumberFormat('no-NO',{style:'currency',currency:'NOK'}).format(n)}catch{return n+' kr'}}
+
+form.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(form).entries());
+  load(data);
+});
+
+load();
+</script>
+</body></html>

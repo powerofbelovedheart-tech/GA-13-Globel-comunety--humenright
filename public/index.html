@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GA-13 • Global Community & Human Rights</title>
+  <style>
+    /* ====== Lys og oppmuntrende tema ====== */
+    :root{
+      --bg:#f7fafc;            /* lys bakgrunn */
+      --paper:#ffffff;         /* kort/panel */
+      --muted:#6b7280;         /* grå tekst */
+      --text:#111827;          /* primær tekst */
+      --ring:#e5e7eb;          /* linjer */
+      --shadow:0 8px 30px rgba(17,24,39,.07);
+      --accent:#22c55e;        /* myk grønn */
+      --accent-2:#60a5fa;      /* myk blå */
+      --warn:#fb923c;          /* varm oransje */
+      --danger:#ef4444;        /* rød */
+      --chip:#eef2ff;          /* lys chip */
+      --chip-text:#1e3a8a;
+      --grad:linear-gradient(180deg,#ffffff 0%, #f7fafc 100%);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--grad);color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    a{color:#2563eb;text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* ====== Header ====== */
+    header{
+      position:sticky;top:0;z-index:10;background:rgba(255,255,255,.85);
+      backdrop-filter:blur(8px);border-bottom:1px solid var(--ring)
+    }
+    .max{max-width:1100px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:36px;height:36px;border-radius:14px;
+      background:
+        radial-gradient(circle at 30% 30%,#93c5fd,transparent 65%),
+        radial-gradient(circle at 70% 60%,#86efac,transparent 55%),
+        #3b82f6; box-shadow:inset 0 0 0 2px #d3e3ff, var(--shadow)
+    }
+    h1{font-size:18px;margin:0}
+    .tag{padding:.2rem .6rem;border-radius:999px;background:#e9fce9;color:#065f46;border:1px solid #bbf7d0;font-size:12px}
+    nav{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+      background:var(--chip);color:var(--chip-text);border:1px solid #dbeafe;cursor:pointer
+    }
+    .chip.active{outline:2px solid var(--accent-2);outline-offset:2px}
+
+    .btn{
+      border:1px solid var(--ring);background:#f8fafc;color:#0f172a;
+      padding:10px 14px;border-radius:10px;cursor:pointer;box-shadow:var(--shadow)
+    }
+    .btn:hover{border-color:#cbd5e1;background:#ffffff}
+    .btn.primary{background:var(--accent);color:#06210f;border:none}
+    .btn.blue{background:var(--accent-2);color:#04152b;border:none}
+    .btn.danger{background:var(--danger);color:#fff;border:none}
+
+    /* ====== Layout ====== */
+    main{max-width:1100px;margin:24px auto;padding:0 20px;display:grid;gap:16px}
+    .card{
+      background:var(--paper);border:1px solid var(--ring);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)
+    }
+    .card>.hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--ring);background:#fbfdff}
+    .card>.bd{padding:16px}
+    .muted{color:var(--muted)}
+    .grid{display:grid;gap:12px}
+    .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media (max-width:880px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr}}
+    .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    input,select,textarea{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--ring);background:#ffffff;color:var(--text)
+    }
+    label{display:block;font-size:13px;margin-bottom:6px;color:#334155}
+    .pill{display:inline-flex;padding:.25rem .6rem;border:1px solid var(--ring);border-radius:999px;background:#f9fafb}
+    .right{margin-left:auto}
+    .empty{padding:20px;border:1px dashed var(--ring);border-radius:12px;background:#fcfcff;color:#475569}
+
+    /* ====== Modal ====== */
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,.25);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal.show{display:flex}
+    .sheet{width:100%;max-width:520px;background:var(--paper);border:1px solid var(--ring);border-radius:16px;box-shadow:var(--shadow)}
+    .sheet .hd{padding:14px 16px;border-bottom:1px solid var(--ring);display:flex;justify-content:space-between;align-items:center}
+    .sheet .bd{padding:16px;display:grid;gap:12px}
+    .alert{padding:10px 12px;border-radius:10px;background:#f1f5f9;border:1px solid var(--ring)}
+    footer{max-width:1100px;margin:36px auto 24px;padding:0 20px;color:var(--muted);font-size:14px}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="max">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <h1>GA-13 • Global Community & Human Rights</h1>
+        <span class="tag">positiv beta</span>
+      </div>
+      <nav>
+        <button class="chip active" data-sec="#home">Hjem</button>
+        <button class="chip" data-sec="#market">Market</button>
+        <button class="chip" data-sec="#media">Media</button>
+        <button class="chip" data-sec="#rights">Rettigheter</button>
+        <button class="chip" data-sec="#history">Historie</button>
+        <button id="btn-login" class="btn blue">Logg inn</button>
+        <button id="btn-logout" class="btn danger hidden">Logg ut</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HJEM -->
+    <section id="home" class="card">
+      <div class="hd">
+        <strong>Velkommen – lys start ✨</strong>
+        <span class="muted">Status: <span id="statusText">ikke innlogget</span></span>
+      </div>
+      <div class="bd grid">
+        <p>Her bygger vi en lys, vennlig plattform for deling, støtte og fremgang. Trykk på Market eller Media for å se innhold – og logg inn for å legge ut egne ting.</p>
+        <div class="row">
+          <button class="btn primary" data-sec="#market">Se annonser</button>
+          <button class="btn" data-sec="#media">Se media</button>
+        </div>
+        <div class="alert">Tips: Du kan når som helst bytte til andre seksjoner via de runde knappene øverst.</div>
+      </div>
+    </section>
+
+    <!-- MARKET -->
+    <section id="market" class="card hidden">
+      <div class="hd">
+        <strong>Market – del, kjøp & gi nytt liv 🌿</strong>
+        <div class="row right">
+          <button id="btn-refresh-market" class="btn">Oppdater</button>
+          <button id="btn-new-ad" class="btn primary hidden">Ny annonse</button>
+        </div>
+      </div>
+      <div class="bd">
+        <div id="marketList" class="grid cols-2"></div>
+        <div id="marketEmpty" class="empty hidden">Ingen annonser enda. Vær først ute – trykk “Ny annonse”.</div>
+
+        <hr style="border-color:var(--ring);margin:16px 0">
+
+        <div id="adFormWrap" class="hidden">
+          <h3>Legg ut annonse</h3>
+          <div class="grid cols-2">
+            <div>
+              <label for="ad-title">Tittel</label>
+              <input id="ad-title" placeholder="f.eks. Barnevogn, pent brukt" />
+            </div>
+            <div>
+              <label for="ad-price">Pris (kr)</label>
+              <input id="ad-price" type="number" min="1" step="1" placeholder="500" />
+            </div>
+            <div class="grid cols-2" style="grid-column:1/-1">
+              <div>
+                <label for="ad-image">Bilde (URL – enkelt i starten)</label>
+                <input id="ad-image" placeholder="https://…" />
+              </div>
+              <div>
+                <label for="ad-category">Kategori</label>
+                <select id="ad-category">
+                  <option>Møbler</option>
+                  <option>Elektronikk</option>
+                  <option>Klær</option>
+                  <option>Annet</option>
+                </select>
+              </div>
+            </div>
+            <div style="grid-column:1/-1">
+              <label for="ad-desc">Beskrivelse</label>
+              <textarea id="ad-desc" rows="3" placeholder="Kort og hyggelig beskrivelse…"></textarea>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button id="btn-post-ad" class="btn primary">Publiser</button>
+            <span class="muted">Betaling (Stripe/Vipps) kobles ved behov ved publisering eller ved salg.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MEDIA -->
+    <section id="media" class="card hidden">
+      <div class="hd">
+        <strong>Media – historier & øyeblikk 📷</strong>
+        <button id="btn-refresh-media" class="btn right">Oppdater</button>
+      </div>
+      <div class="bd">
+        <div id="mediaList" class="grid cols-3"></div>
+        <div id="mediaEmpty" class="empty hidden">Ingen media enda. Del det som løfter andre! 🌼</div>
+      </div>
+    </section>
+
+    <!-- RETTIGHETER -->
+    <section id="rights" class="card hidden">
+      <div class="hd"><strong>Rettigheter</strong></div>
+      <div class="bd grid">
+        <p>Her samler vi enkle, klare forklaringer på hverdagslige rettighetsspørsmål. Snart kan du søke, lagre og dele veiledninger.</p>
+        <ul>
+          <li>Personvern & datarettigheter</li>
+          <li>Husleie, kontrakter & depositum</li>
+          <li>Arbeidsforhold & varsling</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- HISTORIE -->
+    <section id="history" class="card hidden">
+      <div class="hd"><strong>Historie</strong></div>
+      <div class="bd grid">
+        <p>Plassen for ekte historier – små og store – som gir håp og innsikt. Vi legger inn strukturer for “din bok” / “din dagbok” utover.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © <span id="year"></span> GA-13 • Skapt for å løfte – sammen. <span class="muted">Design: lett, lyst & oppmuntrende.</span>
+  </footer>
+
+  <!-- Modal: auth -->
+  <div id="modalAuth" class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="sheet">
+      <div class="hd">
+        <strong id="authTitle">Logg inn</strong>
+        <button id="authClose" class="btn">Lukk</button>
+      </div>
+      <div class="bd">
+        <div class="alert">Demo-auth mot <code>/api/auth/login</code> og <code>/api/auth/register</code>. Lagre token lokalt.</div>
+        <div class="grid cols-2">
+          <div>
+            <label for="authName">Navn (ved registrering)</label>
+            <input id="authName" placeholder="Ola Nordmann" />
+          </div>
+          <div>
+            <label for="authEmail">E-post</label>
+            <input id="authEmail" placeholder="din@epost.no" />
+          </div>
+          <div>
+            <label for="authPass">Passord</label>
+            <input id="authPass" type="password" placeholder="••••••••" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <button id="doLogin" class="btn blue">Logg inn</button>
+          <button id="doRegister" class="btn primary">Registrer</button>
+          <span class="muted">Vi viser kun demo-flyt – koble mot din server.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============== Små hjelpefunksjoner ============== */
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+    const token = () => localStorage.getItem("ga13_token") || "";
+    const headers = () => token()
+      ? {"Content-Type":"application/json","Authorization":"Bearer "+token()}
+      : {"Content-Type":"application/json"};
+
+    const setLoggedInUI = (logged) => {
+      $("#statusText").textContent = logged ? "innlogget" : "ikke innlogget";
+      $("#btn-login").classList.toggle("hidden", logged);
+      $("#btn-logout").classList.toggle("hidden", !logged);
+      $("#btn-new-ad").classList.toggle("hidden", !logged);
+      $("#adFormWrap").classList.toggle("hidden", !logged);
+    };
+
+    /* ============== Navigasjon (chips) ============== */
+    $$(".chip").forEach(ch => {
+      ch.addEventListener("click", () => {
+        $$(".chip").forEach(c => c.classList.remove("active"));
+        ch.classList.add("active");
+        const sec = ch.getAttribute("data-sec");
+        ["#home","#market","#media","#rights","#history"].forEach(id=>{
+          const el = $(id); if(!el) return;
+          el.classList.toggle("hidden", id!==sec);
+        });
+        scrollTo({top:0,behavior:"smooth"});
+      });
+    });
+
+    /* ============== Auth modal ============== */
+    const modal = $("#modalAuth");
+    $("#btn-login").onclick = () => modal.classList.add("show");
+    $("#authClose").onclick = () => modal.classList.remove("show");
+
+    $("#doLogin").onclick = async () => {
+      const email = $("#authEmail").value.trim();
+      const password = $("#authPass").value.trim();
+      if(!email || !password){ alert("Fyll inn e-post og passord"); return; }
+      try{
+        const res = await fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});
+        const data = await res.json();
+        if(!res.ok) throw new Error(data?.error || "Kunne ikke logge inn");
+        localStorage.setItem("ga13_token", data.token);
+        setLoggedInUI(true); modal.classList.remove("show");
+      }catch(e){ alert(e.message); }
+    };
+
+    $("#doRegister").onclick = async () => {
+      const name = $("#authName").value.trim();
+      const email = $("#authEmail").value.trim();
+      const password = $("#authPass").value.trim();
+      if(!email || !password){ alert("Fyll inn e-post og passord"); return; }
+      try{
+        const res = await fetch("/api/auth/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,email,password})});
+        const data = await res.json();
+        if(!res.ok) throw new Error(data?.error || "Kunne ikke registrere");
+        localStorage.setItem("ga13_token", data.token);
+        setLoggedInUI(true); modal.classList.remove("show");
+      }catch(e){ alert(e.message); }
+    };
+
+    $("#btn-logout").onclick = () => {
+      localStorage.removeItem("ga13_token");
+      setLoggedInUI(false);
+    };
+
+    /* ============== Market ============== */
+    async function loadMarket(){
+      try{
+        const res = await fetch("/api/market",{headers:headers()});
+        const data = await res.json();
+        const wrap = $("#marketList");
+        wrap.innerHTML = "";
+        if(!data?.length){
+          $("#marketEmpty").classList.remove("hidden");
+          return;
+        }
+        $("#marketEmpty").classList.add("hidden");
+        for(const it of data){
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <div class="bd">
+              <div class="row" style="gap:14px;align-items:flex-start">
+                <img src="${it.image || "https://placehold.co/160x120?text=Bilde"}" alt="" style="width:160px;height:120px;object-fit:cover;border-radius:12px;border:1px solid var(--ring);box-shadow:var(--shadow)">
+                <div class="grid" style="flex:1">
+                  <div class="row" style="justify-content:space-between">
+                    <strong>${escapeHtml(it.title)}</strong>
+                    <span class="pill">${Number(it.price).toLocaleString("no-NO")} kr</span>
+                  </div>
+                  <p class="muted" style="margin:0">${escapeHtml(it.description || "")}</p>
+                  <div class="row">
+                    <button class="btn blue" data-pay="stripe" data-id="${it.id}" data-price="${it.price}">Betal med kort</button>
+                    <button class="btn" style="background: #e6f7ee;border-color:#bbf7d0" data-pay="vipps" data-id="${it.id}" data-price="${it.price}">Betal med Vipps</button>
+                  </div>
+                  <small class="muted">av ${escapeHtml(it.owner || "ukjent")} • ${new Date(it.createdAt||Date.now()).toLocaleString()}</small>
+                </div>
+              </div>
+            </div>`;
+          wrap.appendChild(card);
+        }
+        // payment buttons
+        wrap.querySelectorAll("[data-pay]").forEach(btn=>{
+          btn.addEventListener("click", ()=>startCheckout(btn.dataset.pay, Number(btn.dataset.price)));
+        });
+      }catch(e){
+        console.error(e); alert("Kunne ikke laste market");
+      }
+    }
+
+    $("#btn-refresh-market").onclick = loadMarket;
+
+    $("#btn-post-ad").onclick = async () => {
+      const title = $("#ad-title").value.trim();
+      const price = Number($("#ad-price").value);
+      const image = $("#ad-image").value.trim();
+      const category = $("#ad-category").value;
+      const description = $("#ad-desc").value.trim();
+      if(!title || !price){ alert("Fyll tittel og pris"); return; }
+      try{
+        const res = await fetch("/api/market",{method:"POST",headers:headers(),body:JSON.stringify({title,price,image,category,description})});
+        if(!res.ok){ const d=await res.json(); throw new Error(d?.error||"Feil ved publisering"); }
+        // last inn på nytt
+        ["ad-title","ad-price","ad-image","ad-desc"].forEach(id=>document.getElementById(id).value="");
+        loadMarket();
+        alert("Annonse publisert!");
+      }catch(e){ alert(e.message); }
+    };
+
+    /* ============== Media ============== */
+    async function loadMedia(){
+      try{
+        const res = await fetch("/api/media",{headers:headers()});
+        const data = await res.json();
+        const wrap = $("#mediaList");
+        wrap.innerHTML = "";
+        if(!data?.length){ $("#mediaEmpty").classList.remove("hidden"); return; }
+        $("#mediaEmpty").classList.add("hidden");
+        for(const m of data){
+          const el = document.createElement("div");
+          el.className = "card";
+          el.innerHTML = `
+            <div class="bd">
+              <img src="${m.thumb || "https://placehold.co/480x280?text=Media"}" alt="" style="width:100%;height:180px;object-fit:cover;border-radius:12px;border:1px solid var(--ring);box-shadow:var(--shadow)">
+              <div class="row" style="justify-content:space-between;margin-top:10px">
+                <strong>${escapeHtml(m.title || "Uten tittel")}</strong>
+                <small class="muted">${new Date(m.createdAt||Date.now()).toLocaleDateString()}</small>
+              </div>
+              <p class="muted" style="margin:4px 0 0">${escapeHtml(m.description || "")}</p>
+            </div>`;
+          wrap.appendChild(el);
+        }
+      }catch(e){
+        console.error(e); alert("Kunne ikke laste media");
+      }
+    }
+
+    $("#btn-refresh-media").onclick = loadMedia;
+
+    /* ============== Stripe/Vipps demo ============== */
+    async function startCheckout(kind, amount){
+      try{
+        const res = await fetch("/api/checkout",{method:"POST",headers:headers(),body:JSON.stringify({amount,currency:"nok",provider:kind})});
+        const data = await res.json();
+        if(!res.ok) throw new Error(data?.error || "Checkout feilet");
+        if(data?.url) location.href = data.url;
+        else alert("Bestilling registrert (demo).");
+      }catch(e){ alert(e.message); }
+    }
+
+    /* ====== Utils ====== */
+    function escapeHtml(str){
+      return String(str||"").replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
+    }
+
+    /* ====== Init ====== */
+    (function init(){
+      document.getElementById("year").textContent = new Date().getFullYear();
+      const logged = Boolean(token());
+      setLoggedInUI(logged);
+      loadMarket();
+      loadMedia();
+      // åpne rett seksjon via hash
+      const sec = location.hash && document.querySelector(`[data-sec="${location.hash}"]`);
+      if(sec) sec.click();
+    })();
+  </script>
+</body>
+</html>

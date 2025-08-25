@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <title>GA-13 – Mine favoritter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{font-family:ui-sans-serif,system-ui;background:#f6fafc;margin:0;color:#0f172a}
+    header{position:sticky;top:0;background:#ffffffaa;backdrop-filter:saturate(180%) blur(8px);
+      border-bottom:1px solid #e5e7eb;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+    .brand{font-weight:800;font-size:20px;color:#1e293b}
+    nav a{margin:0 8px;color:#0f172a;text-decoration:none}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+    .ad-card{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;background:#fff}
+    .ad-card img{width:100%;height:180px;object-fit:cover}
+    .ad-body{padding:12px}
+    .price{font-weight:700}
+    .meta{color:#64748b;font-size:14px}
+    .ad-actions{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .btn{background:#2563eb;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block}
+    .btn-like{border:1px solid #e5e7eb;background:#fff;border-radius:9999px;width:36px;height:36px;cursor:pointer;font-size:18px;line-height:0}
+    .btn-like.active{color:#ef4444;border-color:#ef4444}
+    .empty{padding:24px;background:#fff;border:1px solid #e5e7eb;border-radius:12px}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">GA-13 · Global Community & Human Rights</div>
+  <nav>
+    <a href="/index.html">Hjem</a>
+    <a href="/ads.html">Kjøp & Salg</a>
+    <a href="/favorites.html"><b>Favoritter</b></a>
+    <a href="/media.html">Media</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <h1>Mine favoritter</h1>
+  <div id="list" class="grid"></div>
+  <div id="empty" class="empty" style="display:none">Du har ingen favoritter enda.</div>
+</div>
+
+<script>
+const AUTH_EMAIL = localStorage.getItem("ga13_email");
+
+async function loadFavorites() {
+  if (!AUTH_EMAIL) {
+    document.getElementById("empty").style.display = "block";
+    document.getElementById("empty").textContent = "Logg inn for å se favoritter.";
+    return;
+  }
+  const res = await fetch("/api/favorites", {
+    headers: { "Authorization":"Bearer "+AUTH_EMAIL }
+  });
+  const items = await res.json();
+  const list = document.getElementById("list");
+  const empty = document.getElementById("empty");
+  list.innerHTML = "";
+
+  if (!items.length) {
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  items.forEach(ad => {
+    const el = document.createElement("div");
+    el.className = "ad-card";
+    el.innerHTML = `
+      <img src="${ad.image||'/placeholder.jpg'}" alt="">
+      <div class="ad-body">
+        <h3>${ad.title||'Annonse'}</h3>
+        <p class="price">${ad.price||0} kr</p>
+        <p class="meta">${ad.category||''} • ${ad.location||''}</p>
+        <div class="ad-actions">
+          <a class="btn" href="/ad.html?id=${ad.id}">Se detaljer</a>
+          <button class="btn-like active" data-id="${ad.id}">♥</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+// fjern favoritt fra denne siden
+document.addEventListener("click",(e)=>{
+  const btn = e.target.closest(".btn-like");
+  if(!btn) return;
+  const id = btn.dataset.id;
+  fetch("/api/favorites/"+id, {
+    method:"DELETE",
+    headers:{ "Authorization":"Bearer "+(AUTH_EMAIL||"") }
+  }).then(()=>loadFavorites());
+});
+
+loadFavorites();
+</script>
+</body>
+</html>

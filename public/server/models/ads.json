@@ -1,0 +1,11 @@
+[
+  {
+    "id": "demo-1",
+    "title": "Velkommen til GA-13 – demoannonse",
+    "price": 49,
+    "category": "Introduksjon",
+    "media": [],
+    "owner": "system@ga13.no",
+    "createdAt": "2025-08-01T10:00:00.000Z"
+  }
+]

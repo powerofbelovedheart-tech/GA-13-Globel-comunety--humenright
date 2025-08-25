@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ny annonse | GA-13</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    @media (max-width: 820px){.twoCol{grid-template-columns:1fr}}
+    .muted{color:#9da7b3}
+  </style>
+</head>
+<body>
+<header class="container">
+  <h1>Ny annonse</h1>
+  <nav>
+    <a href="index.html">Hjem</a>
+    <a href="ads.html">Annonser</a>
+    <a href="new-ad.html" class="active">Ny annonse</a>
+    <a href="profile.html">Profil</a>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="card">
+    <h2>Trinn 1 – Betal publiseringsavgift</h2>
+    <p class="muted">Du må betale en liten avgift før publisering (demo: 10 kr).</p>
+    <div class="row" style="gap:8px">
+      <input id="feeAmount" type="number" min="1" value="10" style="max-width:120px"/>
+      <button id="btnPay">Betal med kort (Stripe)</button>
+      <span id="feeStatus" class="muted"></span>
+    </div>
+  </section>
+
+  <form id="adForm" class="card" enctype="multipart/form-data">
+    <h2>Trinn 2 – Fyll inn annonse</h2>
+    <input type="hidden" name="session_id" id="session_id" />
+    <label>Tittel
+      <input type="text" name="title" placeholder="F.eks. Sykkel 26”" required />
+    </label>
+
+    <div class="twoCol">
+      <label>Pris (NOK)
+        <input type="number" name="price" min="0" value="0" />
+      </label>
+      <label>Bilde
+        <input type="file" name="image" accept="image/*" />
+      </label>
+    </div>
+
+    <button id="btnPublish" disabled>Publiser annonse</button>
+    <pre id="adOut"></pre>
+  </form>
+</main>
+
+<script src="script.js"></script>
+<script>
+// --- enkel “paid” flyt ---
+const feeAmount = document.getElementById("feeAmount");
+const btnPay = document.getElementById("btnPay");
+const feeStatus = document.getElementById("feeStatus");
+const sessionIdInput = document.getElementById("session_id");
+const btnPublish = document.getElementById("btnPublish");
+
+// Hvis vi kommer fra Stripe success.html med lagret session_id i localStorage:
+const cached = localStorage.getItem("ga13_last_paid_session");
+if (cached) {
+  sessionIdInput.value = cached;
+  btnPublish.disabled = false;
+  feeStatus.textContent = "Betaling bekreftet.";
+}
+
+btnPay?.addEventListener("click", async () => {
+  try {
+    feeStatus.textContent = "Oppretter betaling...";
+    const amount = parseFloat(feeAmount.value || "10");
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount, currency: "nok" })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Feil ved betaling");
+    window.location.href = data.url; // til Stripe
+  } catch (e) {
+    feeStatus.textContent = e.message;
+  }
+});
+
+// Når skjema sendes, sørg for at session_id finnes:
+document.getElementById("adForm")?.addEventListener("submit", (e) => {
+  if (!sessionIdInput.value) {
+    e.preventDefault();
+    alert("Du må betale først (mangler session_id).");
+  }
+
+});
+</script>
+</body>
+<script>
+document.getElementById("btnVipps").addEventListener("click", async () => {
+  const price = document.querySelector("input[name='price']").value || 10;
+  const res = await fetch("/api/vipps/checkout", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", Authorization:"Bearer "+(localStorage.getItem("ga13_email")||"demo@ga13.no") },
+    body: JSON.stringify({ amount: price })
+  });
+  const data = await res.json();
+  if (data.url) {
+    window.location.href = data.url;
+  } else {
+    alert("Vipps-feil: "+(data.error||"ukjent"));
+  }
+});
+</script>
+</html>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <title>Meldinger · GA-13</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{font-family:ui-sans-serif,system-ui;margin:0;background:#f6fafc;color:#0f172a}
+    header{position:sticky;top:0;background:#ffffffaa;backdrop-filter:saturate(180%) blur(8px);
+      border-bottom:1px solid #e5e7eb;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+    .brand{font-weight:800;font-size:20px;color:#1e293b}
+    nav a{margin:0 8px;color:#0f172a;text-decoration:none}
+    .wrap{max-width:1100px;margin:16px auto;padding:0 16px}
+    .layout{display:grid;grid-template-columns:300px 1fr;gap:16px}
+    .box{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}
+    .conv{border-bottom:1px solid #e5e7eb;padding:12px;cursor:pointer}
+    .conv.active{background:#eff6ff}
+    .conv .meta{font-size:12px;color:#64748b}
+    .conv .unread{background:#ef4444;color:#fff;border-radius:9999px;padding:0 6px;font-size:12px;margin-left:6px}
+    .msgs{height:60vh;overflow:auto;padding:12px}
+    .row{display:flex;gap:8px;padding:12px;border-top:1px solid #e5e7eb}
+    .me,.other{max-width:70%;margin:6px 0;padding:8px 12px;border-radius:12px}
+    .me{background:#2563eb;color:#fff;margin-left:auto}
+    .other{background:#e5e7eb}
+    textarea{flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:8px}
+    .btn{background:#2563eb;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .muted{color:#64748b;font-size:12px}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">GA-13 · Global Community & Human Rights</div>
+  <nav>
+    <a href="/index.html">Hjem</a>
+    <a href="/ads.html">Kjøp & Salg</a>
+    <a href="/favorites.html">Favoritter</a>
+    <a href="/messages.html"><b>Meldinger</b></a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <div class="layout">
+    <div class="box" id="convs"></div>
+
+    <div class="box">
+      <div class="msgs" id="msgs"></div>
+      <div class="row">
+        <textarea id="composer" rows="2" placeholder="Skriv en melding..."></textarea>
+        <button id="send" class="btn">Send</button>
+      </div>
+      <div class="muted" id="threadMeta" style="padding:8px 12px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const AUTH_EMAIL = localStorage.getItem("ga13_email");
+if(!AUTH_EMAIL){ alert("Logg inn først."); location.href="/index.html"; }
+
+let current = null; // { listingId, with }
+const convsEl = document.getElementById("convs");
+const msgsEl = document.getElementById("msgs");
+const metaEl = document.getElementById("threadMeta");
+const composer = document.getElementById("composer");
+const btnSend = document.getElementById("send");
+
+async function loadConvs() {
+  const res = await fetch("/api/conversations", { headers:{ "Authorization":"Bearer "+AUTH_EMAIL } });
+  const convs = await res.json();
+  convsEl.innerHTML = "";
+  if(!convs.length){
+    convsEl.innerHTML = '<div class="conv">Ingen samtaler ennå.</div>';
+    return;
+  }
+  convs.forEach(c=>{
+    const el = document.createElement("div");
+    el.className = "conv";
+    el.innerHTML = `
+      <div><b>Annonsen #${c.listingId}</b></div>
+      <div class="meta">Med: ${c.with} • ${new Date(c.lastTs).toLocaleString()}
+        ${c.unread ? `<span class="unread">${c.unread}</span>` : ""}
+      </div>
+      <div>${(c.lastBody||"").slice(0,120)}</div>
+    `;
+    el.addEventListener("click", ()=>openThread(c.listingId, c.with, el));
+    convsEl.appendChild(el);
+  });
+}
+
+async function openThread(listingId, withEmail, node) {
+  [...convsEl.children].forEach(n=>n.classList.remove("active"));
+  node?.classList.add("active");
+  current = { listingId, with: withEmail };
+  metaEl.textContent = `Annonsen #${listingId} • med ${withEmail}`;
+
+  // marker som lest
+  fetch("/api/messages/read", {
+    method:"PATCH",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":"Bearer "+AUTH_EMAIL
+    },
+    body: JSON.stringify(current)
+  }).catch(()=>{});
+
+  const res = await fetch(`/api/messages/thread?listingId=${encodeURIComponent(listingId)}&with=${encodeURIComponent(withEmail)}`, {
+    headers:{ "Authorization":"Bearer "+AUTH_EMAIL }
+  });
+  const list = await res.json();
+  msgsEl.innerHTML = "";
+  list.forEach(m=>{
+    const b = document.createElement("div");
+    b.className = m.from === AUTH_EMAIL ? "me" : "other";
+    b.textContent = m.body;
+    msgsEl.appendChild(b);
+  });
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+btnSend.addEventListener("click", async ()=>{
+  if(!current){ alert("Velg en samtale."); return; }
+  const txt = composer.value.trim();
+  if(!txt) return;
+  await fetch("/api/messages", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":"Bearer "+AUTH_EMAIL
+    },
+    body: JSON.stringify({
+      listingId: current.listingId,
+      to: current.with,
+      body: txt
+    })
+  });
+  composer.value = "";
+  openThread(current.listingId, current.with);
+});
+
+// init
+loadConvs();
+</script>
+// inne i opprett-annonse handleren:
+const ad = {
+  id: rid(),
+  title: body.title,
+  // ...
+  sellerEmail: req.userEmail,   // <— VIKTIG
+  createdAt: Date.now(),
+  // osv.
+};
+</body>
+</html>

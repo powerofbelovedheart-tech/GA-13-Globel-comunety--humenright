@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>Detaljer | GA-13</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .gallery{display:flex;gap:10px;flex-wrap:wrap}
+    .gallery img{width:220px;height:220px;object-fit:cover;border-radius:10px}
+    .ownerBar{display:flex;gap:10px;align-items:center;margin-top:10px}
+  </style>
+</head>
+<body>
+<header class="container">
+  <h1>Detaljer</h1>
+  <nav>
+    <a href="index.html">Hjem</a>
+    <a href="ads.html">Annonser</a>
+  </nav>
+</header>
+
+<main class="container">
+  <section class="card" id="box">
+    Laster…
+  </section>
+</main>
+
+<script>
+const params = new URLSearchParams(location.search);
+const id = params.get("id");
+
+const authEmail = localStorage.getItem("ga13_email") || ""; // matcher vår enkle demo-auth
+
+async function load() {
+  const res = await fetch("/api/ads/" + encodeURIComponent(id));
+  const a = await res.json();
+  if (!res.ok) { document.getElementById("box").textContent = a.error || "Feil"; return; }
+
+  const imgs = (a.images||[]).map(src=>`<img src="${src}" alt="">`).join("");
+  const isOwner = a.owner && a.owner === authEmail;
+
+  document.getElementById("box").innerHTML = `
+    <h2>${escapeHtml(a.title||"")}</h2>
+    <div class="gallery">${imgs || "<div class='muted'>Ingen bilder</div>"}</div>
+    <p><strong>Pris:</strong> ${(a.price||0).toLocaleString("no-NO")} kr</p>
+    <p>${escapeHtml(a.description||"")}</p>
+    <p class="muted">Eier: ${escapeHtml(a.owner||"-")}</p>
+    ${isOwner ? `
+      <div class="ownerBar">
+        <button id="btnAddImg">Legg til bilde</button>
+        <button id="btnSold">Sett som solgt</button>
+        <button id="btnDelete" class="danger">Slett</button>
+        <input type="file" id="imgInput" accept="image/*" multiple style="display:none">
+      </div>
+    ` : ""}
+  `;
+  
+
+  if (isOwner) {
+    document.getElementById("btnAddImg").onclick = ()=> document.getElementById("imgInput").click();
+    document.getElementById("imgInput").onchange = async (e)=>{
+      const fd = new FormData();
+      [...e.target.files].forEach(f=> fd.append("images", f));
+      const resU = await fetch("/api/ads/"+encodeURIComponent(id), {
+        method:"PATCH",
+        headers:{ Authorization: "Bearer "+authEmail },
+        body: fd
+      });
+      if (resU.ok) location.reload();
+      else alert("Kunne ikke laste opp bilde");
+    };
+    document.getElementById("btnSold").onclick = async ()=>{
+      const resS = await fetch("/api/ads/"+encodeURIComponent(id), {
+        method:"PATCH",
+        headers:{ "Content-Type":"application/json", Authorization: "Bearer "+authEmail },
+        body: JSON.stringify({ status:"sold" })
+      });
+      if (resS.ok) alert("Satt som solgt"); else alert("Feil");
+    };
+    document.getElementById("btnDelete").onclick = async ()=>{
+      if (!confirm("Slette annonsen?")) return;
+      const resD = await fetch("/api/ads/"+encodeURIComponent(id), {
+        method:"DELETE",
+        headers:{ Authorization: "Bearer "+authEmail }
+      });
+      if (resD.ok) location.href="ads.html"; else alert("Feil ved sletting");
+    };
+  }
+}
+function escapeHtml(s){return (s||"").toString().replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]))}
+load();
+</script>
+</body>
+<!-- inni annonsedetalj der du viser tittel/beskrivelse -->
+<div class="ad-actions">
+  <button id="btnContact" class="btn">Kontakt selger</button>
+</div>
+
+<!-- Modal -->
+<div id="msgModal" class="modal hidden">
+  <div class="modal-box">
+    <h3>Send melding til selger</h3>
+    <textarea id="msgBody" rows="5" placeholder="Skriv meldingen din..."></textarea>
+    <div class="row">
+      <button id="msgSend" class="btn">Send</button>
+      <button id="msgClose" class="btn-secondary">Avbryt</button>
+    </div>
+    <p id="msgError" class="error"></p>
+  </div>
+</div>
+
+<style>
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:50}
+.hidden{display:none}
+.modal-box{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;width:100%;max-width:520px}
+.btn{background:#2563eb;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+.btn-secondary{background:#e5e7eb;color:#111827;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+.error{color:#b91c1c;margin-top:8px}
+</style>
+
+<script>
+const AUTH_EMAIL = localStorage.getItem("ga13_email"); // "innlogging light"
+const btnContact = document.getElementById("btnContact");
+const modal = document.getElementById("msgModal");
+const btnClose = document.getElementById("msgClose");
+const btnSend = document.getElementById("msgSend");
+const bodyEl = document.getElementById("msgBody");
+const errEl = document.getElementById("msgError");
+
+// hent annonsen (du har trolig allerede denne logikken)
+const params = new URLSearchParams(location.search);
+const listingId = params.get("id");
+let sellerEmail = ""; // må settes fra annonsedata
+
+async function loadAd() {
+  const res = await fetch(`/api/listings/${listingId}`);
+  const ad = await res.json();
+  sellerEmail = ad.sellerEmail; // sørg for at annonsen har feltet
+  // ... tegn resten av annonsen ...
+}
+loadAd();
+
+btnContact?.addEventListener("click", () => {
+  if (!AUTH_EMAIL) { alert("Logg inn for å sende melding."); return; }
+  modal.classList.remove("hidden");
+  bodyEl.focus();
+});
+btnClose?.addEventListener("click", ()=> modal.classList.add("hidden"));
+
+btnSend?.addEventListener("click", async () => {
+  errEl.textContent = "";
+  const txt = bodyEl.value.trim();
+  if (!txt) { errEl.textContent = "Skriv en melding."; return; }
+  try {
+    const res = await fetch("/api/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type":"application/json",
+        "Authorization":"Bearer "+AUTH_EMAIL
+      },
+      body: JSON.stringify({
+        listingId,
+        to: sellerEmail,
+        body: txt
+      })
+    });
+    if (!res.ok) throw new Error((await res.json()).error||"Feil ved sending");
+    modal.classList.add("hidden");
+    bodyEl.value = "";
+    alert("Melding sendt!");
+  } catch (e) {
+    errEl.textContent = e.message;
+  }
+});
+</script>
+</html>
